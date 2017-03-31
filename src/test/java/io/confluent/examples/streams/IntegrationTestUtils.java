@@ -115,7 +115,13 @@ public class IntegrationTestUtils {
       // deleting important local directory trees.
       if (node.getAbsolutePath().startsWith("/tmp")) {
         List<String> nodes = Collections.singletonList(node.getAbsolutePath());
-        CoreUtils.delete(scala.collection.JavaConversions.asScalaBuffer(nodes).seq());
+
+        //->sza 170331 featured for scala 211->212
+         CoreUtils.delete(scala.collection.JavaConversions.asScalaBuffer(nodes).seq());
+        //prev:
+        //CoreUtils.delete(scala.collection.JavaConversions.asScalaBuffer(nodes).seq());
+        //end of sza <-
+
       }
     }
   }

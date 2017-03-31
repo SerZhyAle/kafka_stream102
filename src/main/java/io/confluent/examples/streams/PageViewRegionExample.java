@@ -36,6 +36,7 @@ import java.util.Properties;
 
 import io.confluent.examples.streams.utils.GenericAvroSerde;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import org.apache.kafka.streams.processor.TopologyBuilder;
 
 /**
  * Demonstrates how to perform a join between a KStream and a KTable, i.e. an example of a stateful
@@ -152,7 +153,12 @@ public class PageViewRegionExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     // Where to find the corresponding ZooKeeper ensemble.
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+    //->sza 170331 featured for kafka 100->102
+    //prev:
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+    // end of sza <-
+
     // Where to find the Confluent schema registry instance(s)
     streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
     // Specify default (de)serializers for record keys and for record values.
@@ -182,7 +188,13 @@ public class PageViewRegionExample {
     // where the key of a record is assumed to be the user id (String) and its value
     // an Avro GenericRecord.  See `userprofile.avsc` under `src/main/avro/` for the
     // corresponding Avro schema.
-    KTable<String, GenericRecord> userProfiles = builder.table("UserProfiles");
+
+    //->sza 170331 featured for kafka 100->102
+    String storeName = "localKeyValueStore";
+    KTable<String, GenericRecord> userProfiles = builder.table("UserProfiles", storeName);
+    //prev:
+   // KTable<String, GenericRecord> userProfiles = builder.table("UserProfiles");
+    // end of sza <-
 
     KTable<String, String> userRegions = userProfiles.mapValues(new ValueMapper<GenericRecord, String>() {
       @Override
@@ -218,7 +230,12 @@ public class PageViewRegionExample {
           }
         })
         // count views by user, using hopping windows of size 5 minutes that advance every 1 minute
-        .countByKey(TimeWindows.of("GeoPageViewsWindow", 5 * 60 * 1000L).advanceBy(60 * 1000L));
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey().count(TimeWindows.of(5 * 60 * 1000L).advanceBy(60 * 1000L), "GeoPageViewsWindow");
+            //prev:
+        //.countByKey(TimeWindows.of("GeoPageViewsWindow", 5 * 60 * 1000L).advanceBy(60 * 1000L));
+    //end of sza <-
 
     // Note: The following operations would NOT be needed for the actual pageview-by-region
     // computation, which would normally stop at the countByKey() above.  We use the operations

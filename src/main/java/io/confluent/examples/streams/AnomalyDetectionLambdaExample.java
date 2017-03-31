@@ -122,7 +122,12 @@ public class AnomalyDetectionLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     // Where to find the corresponding ZooKeeper ensemble.
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+    //->sza 170331 featured for kafka 100->102
+    //prev:
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+    //end of sza <-
+
     // Specify default (de)serializers for record keys and for record values.
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -141,7 +146,13 @@ public class AnomalyDetectionLambdaExample {
         // map the user name as key, because the subsequent counting is performed based on the key
         .map((ignoredKey, username) -> new KeyValue<>(username, username))
         // count users, using one-minute tumbling windows
-        .countByKey(TimeWindows.of("UserCountWindow", 60 * 1000L))
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey().count(TimeWindows.of(60 * 1000L), "UserCountWindow")
+            // prev:
+            //.countByKey(TimeWindows.of("UserCountWindow", 60 * 1000L))
+            // end of sza <-
+
         // get users whose one-minute count is >= 3
         .filter((windowedUserId, count) -> count >= 3);
 

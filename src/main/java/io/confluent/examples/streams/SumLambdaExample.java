@@ -116,7 +116,10 @@ public class SumLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     // Where to find the corresponding ZooKeeper ensemble.
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+    //commented by sza 170331 with kafka 102
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
     // Specify default (de)serializers for record keys and for record values.
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
@@ -139,7 +142,13 @@ public class SumLambdaExample {
         // all records.
         .selectKey((k, v) -> 1)
         // Add the numbers to compute the sum.
-        .reduceByKey((v1, v2) -> v1 + v2, "sum");
+
+            //->sza 170331 featured for kafka 100->102
+    .groupByKey().reduce((v1, v2) -> v1 + v2, "sum");
+            //prev:
+        //.reduceByKey((v1, v2) -> v1 + v2, "sum");
+    //end of sza <-
+
     sumOfOddNumbers.to(SUM_OF_ODD_NUMBERS_TOPIC);
 
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);

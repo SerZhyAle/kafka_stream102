@@ -2,7 +2,10 @@ package io.confluent.examples.streams.kafka;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.apache.kafka.clients.Metadata;
+import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.utils.Time;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +19,13 @@ import kafka.admin.RackAwareMode;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
-import kafka.utils.SystemTime$;
+
+//->sza 170331 featured for kafka 100->102
+import org.apache.kafka.common.utils.SystemTime;
+//prev:
+//import kafka.utils.SystemTime$;
+//end of sza <-
+
 import kafka.utils.TestUtils;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
@@ -59,7 +68,14 @@ public class KafkaEmbedded {
     KafkaConfig kafkaConfig = new KafkaConfig(effectiveConfig, loggingEnabled);
     log.debug("Starting embedded Kafka broker (with log.dirs={} and ZK ensemble at {}) ...",
         logDir, zookeeperConnect());
-    kafka = TestUtils.createServer(kafkaConfig, SystemTime$.MODULE$);
+
+    //->sza 170331 featured for kafka 100->102
+    Time curT = SystemTime.SYSTEM;
+    kafka = TestUtils.createServer(kafkaConfig, curT);
+    //prev:
+    //kafka = TestUtils.createServer(kafkaConfig, SystemTime$.MODULE$);
+    //end of sza <-
+
     log.debug("Startup of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
         brokerList(), zookeeperConnect());
   }
@@ -85,7 +101,13 @@ public class KafkaEmbedded {
    * You can use this to tell Kafka producers and consumers how to connect to this instance.
    */
   public String brokerList() {
-    return String.join(":", kafka.config().hostName(), Integer.toString(kafka.boundPort(SecurityProtocol.PLAINTEXT)));
+
+    //->sza 170331 featured for kafka 100->102
+    ListenerName secProc = ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT);
+    return String.join(":", kafka.config().hostName(), Integer.toString(kafka.boundPort(secProc)));
+    //prev:
+    //return String.join(":", kafka.config().hostName(), Integer.toString(kafka.boundPort(SecurityProtocol.PLAINTEXT)));
+    //end of sza <-
   }
 
 

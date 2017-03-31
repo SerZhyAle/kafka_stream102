@@ -96,7 +96,10 @@ public class WordCountLambdaIntegrationTest {
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+
+    //commented by sza 170331 with kafka 102
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -117,7 +120,13 @@ public class WordCountLambdaIntegrationTest {
     KStream<String, Long> wordCounts = textLines
         .flatMapValues(value -> Arrays.asList(value.toLowerCase().split("\\W+")))
         .map((key, word) -> new KeyValue<>(word, word))
-        .countByKey(stringSerde, "Counts")
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey(stringSerde, stringSerde).count("Counts")
+            //prev:
+        //.countByKey(stringSerde, "Counts")
+            //end of sza <-
+
         .toStream();
 
     wordCounts.to(stringSerde, longSerde, outputTopic);

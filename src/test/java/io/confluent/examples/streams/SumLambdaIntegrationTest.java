@@ -69,7 +69,10 @@ public class SumLambdaIntegrationTest {
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "sum-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+
+    //commented by sza 170331 with kafka 102
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -87,7 +90,13 @@ public class SumLambdaIntegrationTest {
     KTable<Integer, Integer> sumOfOddNumbers = input
         .filter((k, v) -> v % 2 == 0)
         .selectKey((k, v) -> 1)
-        .reduceByKey((v1, v2) -> v1 + v2, "sum");
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey().reduce((v1, v2) -> v1 + v2, "sum");
+            //prev:
+        //.reduceByKey((v1, v2) -> v1 + v2, "sum");
+    //end of sza <-
+
     sumOfOddNumbers.to(outputTopic);
 
     KafkaStreams streams = new KafkaStreams(builder, streamsConfiguration);

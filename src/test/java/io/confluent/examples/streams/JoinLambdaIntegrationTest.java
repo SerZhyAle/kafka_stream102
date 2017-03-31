@@ -138,7 +138,12 @@ public class JoinLambdaIntegrationTest {
     Properties streamsConfiguration = new Properties();
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "join-lambda-integration-test");
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+
+    //->sza 170331 featured for kafka 100->102
+    //prev:
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, CLUSTER.zookeeperConnect());
+    //end of sza <-
+
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -148,7 +153,7 @@ public class JoinLambdaIntegrationTest {
     // StreamsConfig configuration (so we can retrieve whatever state directory Streams came up
     // with automatically) we don't need to set this anymore and can update `purgeLocalStreamsState`
     // accordingly.
-    streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-streams");
+    streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "c:/tmp/kafka-streams");
 
     // Remove any state from previous test runs
     IntegrationTestUtils.purgeLocalStreamsState(streamsConfiguration);
@@ -172,8 +177,16 @@ public class JoinLambdaIntegrationTest {
     // lived in "asia") because, at the time her first user-click record is being received and
     // subsequently processed in the `leftJoin`, the latest region update for "alice" is "europe"
     // (which overrides her previous region value of "asia").
+
+    //->sza 170331 featured for kafka 100->102
+    String storeName = "localKeyValueStore";
     KTable<String, String> userRegionsTable =
-        builder.table(stringSerde, stringSerde, userRegionsTopic);
+        builder.table(stringSerde, stringSerde, userRegionsTopic, storeName);
+//prev:
+//KTable<String, String> userRegionsTable =
+//        builder.table(stringSerde, stringSerde, userRegionsTopic);
+    //end of sza <-
+
 
     // Compute the number of clicks per region, e.g. "europe" -> 13L.
     //
@@ -195,9 +208,16 @@ public class JoinLambdaIntegrationTest {
         // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
         .map((user, regionWithClicks) -> new KeyValue<>(regionWithClicks.getRegion(), regionWithClicks.getClicks()))
         // Compute the total per region by summing the individual click counts per region.
-        .reduceByKey(
-            (firstClicks, secondClicks) -> firstClicks + secondClicks,
-            stringSerde, longSerde, "ClicksPerRegionUnwindowed");
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey(stringSerde, longSerde).reduce(
+                    (firstClicks, secondClicks) -> firstClicks + secondClicks,
+                    "ClicksPerRegionUnwindowed");
+            //prevL
+//        .reduceByKey(
+//            (firstClicks, secondClicks) -> firstClicks + secondClicks,
+//            stringSerde, longSerde, "ClicksPerRegionUnwindowed");
+    //end of sza <-
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.to(stringSerde, longSerde, outputTopic);

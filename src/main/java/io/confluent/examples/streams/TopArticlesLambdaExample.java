@@ -66,7 +66,12 @@ public class TopArticlesLambdaExample {
         // Where to find Kafka broker(s).
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         // Where to find the corresponding ZooKeeper ensemble.
-        streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+        //->sza 170331 featured for kafka 100->102
+        //prev:
+        //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+        //end of sza <-
+
         // Where to find the Confluent schema registry instance(s)
         streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
         // Specify default (de)serializers for record keys and for record values.
@@ -91,7 +96,12 @@ public class TopArticlesLambdaExample {
 
         KTable<Windowed<GenericRecord>, Long> viewCounts = articleViews
                 // count the clicks per hour, using tumbling windows with a size of one hour
-                .countByKey(TimeWindows.of("PageViewCountWindows", 60 * 60 * 1000L), avroSerde);
+
+                //->sza 170331 featured for kafka 100->102
+                .groupByKey(avroSerde, avroSerde).count(TimeWindows.of(60 * 60 * 1000L).advanceBy(60 * 1000L), "PageViewCountWindows");
+                //prev:
+                //.countByKey(TimeWindows.of("PageViewCountWindows", 60 * 60 * 1000L), avroSerde);
+        //end of sza <-
 
         KTable<Windowed<String>, PriorityQueue<GenericRecord>> allViewCounts = viewCounts
             .groupBy(

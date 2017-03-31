@@ -129,7 +129,12 @@ public class WordCountLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     // Where to find the corresponding ZooKeeper ensemble.
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+    //->sza 170331 featured for kafka 100->102
+    //prev:
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+    //end of sza <-
+
     // Specify default (de)serializers for record keys and for record values.
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -166,7 +171,13 @@ public class WordCountLambdaExample {
         // `KTable<String, Long>` (word -> count).  We must provide a name for
         // the resulting KTable, which will be used to name e.g. its associated
         // state store and changelog topic.
-        .countByKey("Counts")
+
+            //->sza 170331 featured for kafka 100->102
+            .groupByKey().count("Counts")
+            //prev:
+        //.countByKey("Counts")
+            //end of sza <-
+
         // Convert the `KTable<String, Long>` into a `KStream<String, Long>`.
         .toStream();
 

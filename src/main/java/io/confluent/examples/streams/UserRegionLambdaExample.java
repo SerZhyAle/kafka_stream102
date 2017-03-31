@@ -124,7 +124,10 @@ public class UserRegionLambdaExample {
     // Where to find Kafka broker(s).
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     // Where to find the corresponding ZooKeeper ensemble.
-    streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
+    //commented by sza 170331 with kafka 102
+    //streamsConfiguration.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+
     // Specify default (de)serializers for record keys and for record values.
     streamsConfiguration.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
     streamsConfiguration.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -136,7 +139,13 @@ public class UserRegionLambdaExample {
 
     // Read the source stream
     // We assume record key = username and record value = geo-region
-    KTable<String, String> userRegions = builder.table("UserRegions");
+
+    //->sza 170331 featured for kafka 100->102
+    String storeName = "localKeyValueStore";
+    KTable<String, String> userRegions = builder.table("UserRegions", storeName);
+    //prev:
+    //KTable<String, String> userRegions = builder.table("UserRegions");
+    //end of sza <-
 
     // Aggregate the user counts of by region
     KTable<String, Long> regionCounts = userRegions
